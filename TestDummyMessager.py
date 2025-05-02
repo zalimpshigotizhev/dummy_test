@@ -10,6 +10,7 @@ import aiohttp
 messages_dict = []
 
 async def worker(num: int, who: str, host_url: str, message: str):
+    """Один экземпляр запроса происходит в этой функции"""
     data = {
         "name": who,
         "text": message
@@ -28,6 +29,7 @@ async def worker(num: int, who: str, host_url: str, message: str):
 
 
 async def main():
+    """Entrypoint"""
     hosts = ["http://localhost:8000/new_message/", "http://localhost:8001/new_message/"]
     names = [
         "Алексей",

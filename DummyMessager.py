@@ -3,19 +3,21 @@ import os
 
 from typing import List
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
-from pydantic import BaseModel
-from sqlalchemy import Column, Integer, String, Text, select, text, DateTime, UniqueConstraint, and_, exists
+from sqlalchemy import DateTime, UniqueConstraint, Column, Integer, String, Text, select, and_, exists
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql.functions import now, func
+from sqlalchemy.sql.functions import now
+from pydantic import BaseModel
+from dotenv import load_dotenv
+
 
 Base = declarative_base()
 load_dotenv()
 
 MAX_MESSAGES = 10
+
 
 class Message(Base):
     __tablename__ = 'messages'
@@ -28,6 +30,7 @@ class Message(Base):
     text = Column(Text)
     created_at = Column(DateTime, default=now())
     user_message_count = Column(Integer, nullable=True)
+
 
 class MessageItem(BaseModel):
     name: str
@@ -45,7 +48,9 @@ class MessageResponse(BaseModel):
 class ItemsResponse(BaseModel):
     items: List[MessageResponse]
 
+
 def get_db_url():
+    """Получаем из виртуальных переменных данные для подключение к БД"""
     user_db = os.getenv("DB_USER")
     password_db = os.getenv("DB_PASSWORD")
     host_db = os.getenv("DB_HOST")
@@ -54,17 +59,21 @@ def get_db_url():
 
     return f"postgresql+asyncpg://{user_db}:{password_db}@{host_db}:{port_db}/{name_db}"
 
+
 async def prep_db():
     db_url = get_db_url()
     engine = create_async_engine(db_url, echo=True)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Жизненный цикл FastAPI приложение"""
     # При старте приложения
     await prep_db()
     yield
+
 
 app = FastAPI(lifespan=lifespan)
 db_url = get_db_url()
@@ -85,7 +94,8 @@ engine = create_async_engine(
 
 @app.post('/new_message/')
 async def create_and_get_last_messages(message_json: MessageItem) -> ItemsResponse:
-
+    """Единственный url для создания одного сообщения
+    и возврата последних десяти созданных сообщений"""
     async_session = async_sessionmaker(
         bind=engine, expire_on_commit=False, class_=AsyncSession
     )
