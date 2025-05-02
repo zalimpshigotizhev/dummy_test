@@ -121,17 +121,6 @@ async def create_and_get_last_messages(message_json: MessageItem) -> ItemsRespon
                         text=message.get("text"),
                         user_message_count=next_count
                     )
-                    is_exist = await session.scalar(
-                        select(exists().where(
-                            and_(
-                                Message.name == message.get("name"),
-                                Message.user_message_count == next_count
-                            )
-                        )))
-
-
-                    if is_exist:
-                        raise IntegrityError
 
                     session.add(new_message)
                     await session.flush()

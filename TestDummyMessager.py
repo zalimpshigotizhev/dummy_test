@@ -63,7 +63,11 @@ async def main():
             )
         await asyncio.gather(*works)
 
-    print("Операция длилась: ", datetime.now() - start_time)
+    print("-------> Результаты выполнения <-------")
+    total_time = (datetime.now() - start_time).seconds
+    print("Операция 5000 запросов длилась: ", total_time)
+    print("Время работы одного запроса: ", total_time / 5000)
+    print("Пропускная способность (Запросов в секунду): ", 5000 / total_time)
 
 
 
